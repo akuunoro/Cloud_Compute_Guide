@@ -293,12 +293,43 @@ vastai ssh-url <INSTANCE_ID>
 3. Add it as a Host in `~/.ssh/config`, or use Command Palette → Remote-SSH: Connect to Host.
 4. Connect, then **Open Folder** on the instance repo.
 5. Use the integrated terminal for the venv and training.
-6. Monitor your training on the instance — see Section 9.
+6. Monitor your training on the instance — see Section 10.
 
 > [!tip] No quoting to learn
 > Once connected, everything (activate venv, run `train.py`, monitor) happens in the instance's integrated terminal — no WSL/PowerShell juggling.
 
-## 9. Run training
+## 9. Pre-flight checklist
+
+Before y'all start training, run through these checks. If any of them fail, fix it first.
+
+Check the GPU is there:
+```bash
+python -c "import torch; print(torch.cuda.is_available())"
+```
+This should print `True`.
+
+Check torch and which CUDA build:
+```bash
+python -c "import torch; print(torch.__version__, torch.version.cuda)"
+```
+
+Check you're in the virtual environment:
+```bash
+which python
+```
+This should print a path ending in `project/.venv/bin/python`, not the system Python.
+
+Check your repository is cloned:
+```bash
+ls ~/project
+```
+
+Check your dependencies are installed:
+```bash
+uv pip list
+```
+
+## 10. Run training
 
 ```bash
 tmux new -s train
@@ -324,7 +355,7 @@ df -h
 tail -f logs/train.log
 ```
 
-## 10. Retrieve results
+## 11. Retrieve results
 
 ```bash
 git add .
@@ -344,7 +375,7 @@ scp -P <PORT> -r root@<HOST>:~/project/checkpoints ./checkpoints
 > [!note] Bandwidth is billed
 > Download only what you need; avoid pulling large media or logs.
 
-## 11. Stop vs destroy
+## 12. Stop vs destroy
 
 ```bash
 vastai stop instance <ID>
@@ -361,7 +392,7 @@ vastai destroy instance <ID>
 > [!warning] Destroy when done
 > `stop` ends GPU charges but storage keeps billing every second. To fully stop paying, `destroy`.
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | Symptom | Fix |
 |---|---|
@@ -373,13 +404,3 @@ vastai destroy instance <ID>
 | Run killed after disconnect | Not in `tmux`/`screen` |
 | Instance `exited`/`offline` | Won't recover; destroy and rent another |
 | Spot preempted | Resume from checkpoints; use on-demand next time |
-
-## Appendix. Pre-flight checklist
-
-Before y'all run any training, make sure these are set:
-- Your image has CUDA (12.4.1).
-- Your repository is cloned on the instance.
-- Your virtual environment is activated.
-- torch and your dependencies are installed.
-- python -c "import torch; print(torch.cuda.is_available())" prints True.
-- Your training runs inside tmux, so it won't die when you disconnect.
