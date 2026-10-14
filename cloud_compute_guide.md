@@ -82,7 +82,10 @@ Check for one:
 ls ~/.ssh/id_ed25519.pub
 ```
 
-If missing:
+If the path shows up. Then you're good.
+
+If there's none, run this:
+
 ```bash
 ssh-keygen -t ed25519 -C "put-your-gmail-address-here"
 ```
@@ -248,7 +251,14 @@ apt-get update
 apt-get install -y curl git
 ```
 
+Clone your repository on the instance and install your dependencies. torch is the big one, so grab the CUDA 12.4 build. Without this, the GPU check below will fail.
 
+```bash
+git clone <repo-url>
+```
+```bash
+cd project
+```
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -261,8 +271,14 @@ uv venv --python 3.12 --seed .venv
 ```bash
 source .venv/bin/activate
 ```
+```bash
+uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+```
+```bash
+uv pip install -r requirements.txt
+```
 
-Verify GPU:
+Then run this to check the GPU. If it prints `True`, then you're good.
 ```bash
 python -c "import torch; print(torch.cuda.is_available())"
 ```
@@ -277,7 +293,7 @@ vastai ssh-url <INSTANCE_ID>
 3. Add it as a Host in `~/.ssh/config`, or use Command Palette → Remote-SSH: Connect to Host.
 4. Connect, then **Open Folder** on the instance repo.
 5. Use the integrated terminal for the venv and training.
-6. Forward TensorBoard/Jupyter ports via the Ports panel.
+6. Monitor your training on the instance — see Section 9.
 
 > [!tip] No quoting to learn
 > Once connected, everything (activate venv, run `train.py`, monitor) happens in the instance's integrated terminal — no WSL/PowerShell juggling.
@@ -357,3 +373,13 @@ vastai destroy instance <ID>
 | Run killed after disconnect | Not in `tmux`/`screen` |
 | Instance `exited`/`offline` | Won't recover; destroy and rent another |
 | Spot preempted | Resume from checkpoints; use on-demand next time |
+
+## Appendix. Pre-flight checklist
+
+Before y'all run any training, make sure these are set:
+- Your image has CUDA (12.4.1).
+- Your repository is cloned on the instance.
+- Your virtual environment is activated.
+- torch and your dependencies are installed.
+- python -c "import torch; print(torch.cuda.is_available())" prints True.
+- Your training runs inside tmux, so it won't die when you disconnect.
